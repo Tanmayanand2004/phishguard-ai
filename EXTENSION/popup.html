@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #ffffff;
+    }
+
+    .header {
+      padding: 16px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo { font-size: 22px; }
+
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: #888;
+      margin-top: 1px;
+    }
+
+    .content { padding: 16px; }
+
+    .status-card {
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .status-safe {
+      background: rgba(0, 200, 100, 0.1);
+      border: 1px solid rgba(0, 200, 100, 0.3);
+    }
+
+    .status-phishing {
+      background: rgba(255, 50, 50, 0.1);
+      border: 1px solid rgba(255, 50, 50, 0.3);
+    }
+
+    .status-scanning {
+      background: rgba(255, 200, 0, 0.1);
+      border: 1px solid rgba(255, 200, 0, 0.3);
+    }
+
+    .status-icon { font-size: 36px; margin-bottom: 8px; }
+
+    .status-label {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .status-safe .status-label { color: #00c864; }
+    .status-phishing .status-label { color: #ff3232; }
+    .status-scanning .status-label { color: #ffc800; }
+
+    .status-url {
+      font-size: 11px;
+      color: #888;
+      word-break: break-all;
+      margin-top: 6px;
+    }
+
+    .risk-bar-container {
+      margin: 12px 0;
+    }
+
+    .risk-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .risk-bar {
+      height: 8px;
+      background: #333;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .risk-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .footer {
+      padding: 10px 16px;
+      border-top: 1px solid #222;
+      font-size: 10px;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🛡️</div>
+    <div>
+      <div class="title">PhishGuard AI</div>
+      <div class="subtitle">Real-time phishing detection</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="status-card" class="status-card status-scanning">
+      <div class="status-icon" id="status-icon">⏳</div>
+      <div class="status-label" id="status-label">Scanning...</div>
+      <div class="status-url" id="status-url"></div>
+    </div>
+
+    <div class="risk-bar-container">
+      <div class="risk-bar-label">
+        <span>Risk Score</span>
+        <span id="risk-percent">—</span>
+      </div>
+      <div class="risk-bar">
+        <div class="risk-fill" id="risk-fill" style="width: 0%; background: #ffc800;"></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="confidence-val">—</div>
+        <div class="stat-label">Confidence</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="scan-time-val">—</div>
+        <div class="stat-label">Scan Time</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Powered by XGBoost · 97% accuracy · PhishGuard v1.0
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
