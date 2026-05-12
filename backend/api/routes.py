@@ -65,3 +65,34 @@ def get_feature_names():
         "count": len(feature_names),
         "features": feature_names
     }
+
+from backend.ml.feature_extractor import extract_all_features
+
+class URLScanRequest(BaseModel):
+    url: str
+
+@router.post("/scan/url")
+def scan_url_direct(request: URLScanRequest):
+    """
+    Scan a raw URL directly — extracts features automatically.
+    """
+    start = time.time()
+
+    try:
+        features = extract_all_features(request.url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Feature extraction failed: {str(e)}")
+
+    try:
+        result = predict(features)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+    elapsed = round((time.time() - start) * 1000, 2)
+
+    return {
+        **result,
+        "url": request.url,
+        "features_extracted": len(features),
+        "scan_time_ms": elapsed
+    }
