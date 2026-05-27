@@ -37,7 +37,7 @@ def get_entropy(text):
 def extract_url_features(url):
     features = {}
     parsed = urlparse(url)
-    
+
     full_url = url
     domain_part = parsed.netloc
     path_part = parsed.path
@@ -64,7 +64,7 @@ def extract_url_features(url):
     features['qty_hashtag_url'] = count_chars(full_url, '#')
     features['qty_dollar_url'] = count_chars(full_url, '$')
     features['qty_percent_url'] = count_chars(full_url, '%')
-    features['qty_tld_url'] = 1  # simplified
+    features['qty_tld_url'] = 1
 
     # Domain-level features
     features['domain_length'] = len(domain_part)
@@ -169,30 +169,35 @@ def extract_url_features(url):
 def extract_dns_features(domain):
     features = {}
 
+    # Use Google's public DNS to avoid network restrictions
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers = ['8.8.8.8', '8.8.4.4']
+    resolver.lifetime = 5
+
     # Nameservers
     try:
-        ns = dns.resolver.resolve(domain, 'NS', lifetime=5)
+        ns = resolver.resolve(domain, 'NS')
         features['qty_nameservers'] = len(list(ns))
     except:
         features['qty_nameservers'] = 0
 
     # MX records
     try:
-        mx = dns.resolver.resolve(domain, 'MX', lifetime=5)
+        mx = resolver.resolve(domain, 'MX')
         features['qty_mx_servers'] = len(list(mx))
     except:
         features['qty_mx_servers'] = 0
 
     # TTL
     try:
-        a = dns.resolver.resolve(domain, 'A', lifetime=5)
+        a = resolver.resolve(domain, 'A')
         features['ttl_hostname'] = a.rrset.ttl
     except:
         features['ttl_hostname'] = 0
 
     # SPF record
     try:
-        txt = dns.resolver.resolve(domain, 'TXT', lifetime=5)
+        txt = resolver.resolve(domain, 'TXT')
         spf = any('spf' in str(r).lower() for r in txt)
         features['domain_spf'] = 1 if spf else 0
     except:
@@ -211,7 +216,7 @@ def extract_dns_features(domain):
 
 
 # ─────────────────────────────────────────
-# WHOIS FEATURES
+# WHOIS FEATURES (FIXED)
 # ─────────────────────────────────────────
 
 def extract_whois_features(domain):
@@ -219,13 +224,15 @@ def extract_whois_features(domain):
 
     try:
         w = whois.whois(domain)
-        now = datetime.now()
+        now = datetime.utcnow()
 
         # Domain activation (creation date)
         creation = w.creation_date
         if isinstance(creation, list):
             creation = creation[0]
         if creation:
+            if hasattr(creation, 'tzinfo') and creation.tzinfo:
+                creation = creation.replace(tzinfo=None)
             features['time_domain_activation'] = (now - creation).days
         else:
             features['time_domain_activation'] = 0
@@ -235,11 +242,14 @@ def extract_whois_features(domain):
         if isinstance(expiry, list):
             expiry = expiry[0]
         if expiry:
+            if hasattr(expiry, 'tzinfo') and expiry.tzinfo:
+                expiry = expiry.replace(tzinfo=None)
             features['time_domain_expiration'] = (expiry - now).days
         else:
             features['time_domain_expiration'] = 0
 
-    except Exception:
+    except Exception as e:
+        print(f"  WHOIS error for {domain}: {e}")
         features['time_domain_activation'] = 0
         features['time_domain_expiration'] = 0
 
@@ -266,9 +276,20 @@ def extract_web_features(url, domain):
         features['qty_redirects'] = 0
         features['time_response'] = 0
 
-    # Google index (simplified check)
-    features['url_google_index'] = 0
-    features['domain_google_index'] = 0
+    # Google index — check if domain appears in Google
+    try:
+        search_url = f"https://www.google.com/search?q=site:{domain}"
+        r = requests.get(
+            search_url, timeout=5,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        )
+        # If Google returns results page (not a captcha/block)
+        indexed = 'did not match any documents' not in r.text.lower()
+        features['domain_google_index'] = 1 if indexed else 0
+        features['url_google_index'] = 1 if indexed else 0
+    except:
+        features['domain_google_index'] = 0
+        features['url_google_index'] = 0
 
     return features
 
@@ -290,7 +311,6 @@ def extract_all_features(url: str) -> dict:
     # Extract all feature groups
     features = {}
     features.update(extract_url_features(url))
-
     print("  ✓ URL structure features")
 
     dns_feats = extract_dns_features(domain)

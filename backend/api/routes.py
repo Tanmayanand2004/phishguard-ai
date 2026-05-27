@@ -84,7 +84,7 @@ def scan_url_direct(request: URLScanRequest):
         raise HTTPException(status_code=500, detail=f"Feature extraction failed: {str(e)}")
 
     try:
-        result = predict(features)
+        result = predict(features, url=request.url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
